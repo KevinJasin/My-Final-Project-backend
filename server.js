@@ -3,7 +3,7 @@ import cors from "cors";
 import fs from "fs";
 import path from "path";
 import excelJS from "exceljs";
-import nodemailer from "nodemailer"; // ✅ Email sending
+import nodemailer from "nodemailer";
 
 const app = express();
 const PORT = 3001;
@@ -11,10 +11,11 @@ const PORT = 3001;
 app.use(cors());
 app.use(express.json());
 
-const __dirname = path.resolve(); // Get the root directory
+const __dirname = path.resolve(); // Get root dir
+const dataDir = path.join(__dirname, "data");
+const filePath = path.join(dataDir, "registrations.xlsx");
 
 // Ensure data directory exists
-const dataDir = path.join(__dirname, "data");
 if (!fs.existsSync(dataDir)) {
   fs.mkdirSync(dataDir);
   console.log("📂 'data' directory created.");
@@ -22,10 +23,19 @@ if (!fs.existsSync(dataDir)) {
   console.log("📂 'data' directory already exists.");
 }
 
-// Endpoint to save data to Excel and send via email
+// ✅ POST: Save registration data to Excel and send email
 app.post("/save-excel", async (req, res) => {
   try {
-    const { parentName, parentPhone, studentName, studentClass, subject, level, groupSize, question } = req.body;
+    const {
+      parentName,
+      parentPhone,
+      studentName,
+      studentClass,
+      subject,
+      level,
+      groupSize,
+      question,
+    } = req.body;
 
     if (
       !parentName?.trim() ||
@@ -37,13 +47,10 @@ app.post("/save-excel", async (req, res) => {
       !groupSize?.trim() ||
       !question?.trim()
     ) {
-      console.log("❌ ERROR: Some fields are missing or empty.");
+      console.log("❌ ERROR: Missing or empty fields.");
       return res.status(400).json({ message: "All fields are required." });
     }
 
-    const filePath = path.join(dataDir, "registrations.xlsx");
-
-    // Create or load workbook
     const workbook = new excelJS.Workbook();
     let worksheet;
 
@@ -52,10 +59,18 @@ app.post("/save-excel", async (req, res) => {
       worksheet = workbook.getWorksheet("Registrations");
     } else {
       worksheet = workbook.addWorksheet("Registrations");
-      worksheet.addRow(["Parent Name", "Parent Phone", "Student Name", "Student Class", "Subject", "Level", "Group Size", "Question"]);
+      worksheet.addRow([
+        "Parent Name",
+        "Parent Phone",
+        "Student Name",
+        "Student Class",
+        "Subject",
+        "Level",
+        "Group Size",
+        "Question",
+      ]);
     }
 
-    // Add data row
     worksheet.addRow([
       parentName.trim(),
       parentPhone.trim(),
@@ -70,36 +85,39 @@ app.post("/save-excel", async (req, res) => {
     await workbook.xlsx.writeFile(filePath);
     console.log("✅ Excel file updated.");
 
-    // ✅ Email the Excel file to you and your teacher
+    // ✅ Send email with attached Excel file
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
-        user: "testalgoritmtest@gmail.com", // <-- replace
-        pass: "wthr vjcq aqed uxfr",    // <-- replace with Gmail App Password
+        user: "testalgoritmtest@gmail.com",         // ✅ your Gmail address
+        pass: "wthr vjcq aqed uxfr",                 // ✅ your Gmail App Password
       },
     });
 
     const mailOptions = {
-      from: "your.email@gmail.com", // <-- replace
-      to: ["your.email@gmail.com", "teacher.email@gmail.com"], // <-- replace both
+      from: "testalgoritmtest@gmail.com",
+      to: ["your.email@gmail.com", "teacher.email@gmail.com"], // ✅ change both
       subject: "📥 New Registration Submitted",
       text: "A new registration has been submitted. Excel file attached.",
-      attachments: [
-        {
-          filename: "registrations.xlsx",
-          path: filePath,
-        },
-      ],
+      attachments: [{ filename: "registrations.xlsx", path: filePath }],
     };
 
     await transporter.sendMail(mailOptions);
-    console.log("📧 Email sent to you and your teacher.");
+    console.log("📧 Email sent.");
 
     res.status(200).json({ message: "Data saved and email sent successfully!" });
-
   } catch (error) {
     console.error("❌ ERROR:", error.message);
     res.status(500).json({ message: "Error saving data or sending email" });
+  }
+});
+
+// ✅ GET: Download the latest Excel file
+app.get("/download-excel", (req, res) => {
+  if (fs.existsSync(filePath)) {
+    res.download(filePath, "registrations.xlsx");
+  } else {
+    res.status(404).send("Excel file not found.");
   }
 });
 
