@@ -114,8 +114,12 @@ app.post("/save-excel", async (req, res) => {
 
 // ✅ GET: Download the latest Excel file
 app.get("/download-excel", (req, res) => {
+  const filePath = path.join(dataDir, "registrations.xlsx");
+
   if (fs.existsSync(filePath)) {
-    res.download(filePath, "registrations.xlsx");
+    res.setHeader('Content-Disposition', 'attachment; filename="registrations.xlsx"');
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    fs.createReadStream(filePath).pipe(res);
   } else {
     res.status(404).send("Excel file not found.");
   }

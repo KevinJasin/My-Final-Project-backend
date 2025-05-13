@@ -1,0 +1,17 @@
+# Node modules and dependencies
+node_modules/
+
+# Data files (like the Excel file)
+data/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment variables (if you add .env later)
+.env
+
+# OS / IDE / build stuff
+.DS_Store
+dist/
