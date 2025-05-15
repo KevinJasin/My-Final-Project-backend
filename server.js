@@ -99,7 +99,7 @@ app.post("/save-excel", async (req, res) => {
 
     const mailOptions = {
       from: process.env.EMAIL_USER,
-      to: [process.env.EMAIL_TO_1, process.env.EMAIL_TO_2],
+      to: process.env.EMAIL_TO_1, // ✅ single email, not an array
       subject: "📥 New Registration Submitted",
       text: "A new registration has been submitted. Excel file is attached.",
       attachments: [{ filename: "registrations.xlsx", path: filePath }],
