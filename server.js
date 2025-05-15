@@ -4,6 +4,9 @@ import fs from "fs";
 import path from "path";
 import excelJS from "exceljs";
 import nodemailer from "nodemailer";
+import dotenv from "dotenv";
+
+dotenv.config(); // ✅ Load .env variables
 
 const app = express();
 const PORT = 3001;
@@ -85,20 +88,20 @@ app.post("/save-excel", async (req, res) => {
     await workbook.xlsx.writeFile(filePath);
     console.log("✅ Excel file updated.");
 
-    // ✅ Send email with attached Excel file
+    // ✅ Send email with attachment
     const transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
-        user: "testalgoritmtest@gmail.com",         // ✅ your Gmail address
-        pass: "wthr vjcq aqed uxfr",                 // ✅ your Gmail App Password
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
       },
     });
 
     const mailOptions = {
-      from: "testalgoritmtest@gmail.com",
-      to: ["your.email@gmail.com", "teacher.email@gmail.com"], // ✅ change both
+      from: process.env.EMAIL_USER,
+      to: [process.env.EMAIL_TO_1, process.env.EMAIL_TO_2],
       subject: "📥 New Registration Submitted",
-      text: "A new registration has been submitted. Excel file attached.",
+      text: "A new registration has been submitted. Excel file is attached.",
       attachments: [{ filename: "registrations.xlsx", path: filePath }],
     };
 
